@@ -69,6 +69,5 @@ static const struct arg args[] = {
 	{run_command, "VOL:%s", 		"pamixer --get-volume-human"},
 	{run_command, "Bri:%s", 		"xbacklight -get"},
 	{run_command, "KB:%s", 			"xbacklight -get -ctrl smc::kbd_backlight"},
-	{run_command, "keymap:%s", 	NULL},
-	{battery_perc,"BAT%s", 			"BAT0"}
+	{run_command, "keymap:%s", 				NULL},
 };
