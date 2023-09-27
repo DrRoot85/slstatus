@@ -1,0 +1,139 @@
+From 82914c53f777c3d69bb593a0108c6326f61a6d86 Mon Sep 17 00:00:00 2001
+From: Matvey <mathway.home@gmail.com>
+Date: Thu, 5 Jan 2023 03:34:23 +0300
+Subject: [PATCH] added leaked_ip function - ip as seen by internet
+
+---
+ components/ip.c | 80 +++++++++++++++++++++++++++++++++++++++++++++++--
+ config.def.h    |  1 +
+ slstatus.h      |  1 +
+ 3 files changed, 80 insertions(+), 2 deletions(-)
+
+diff --git a/components/ip.c b/components/ip.c
+index 9476549..bed3003 100644
+--- a/components/ip.c
++++ b/components/ip.c
+@@ -1,4 +1,6 @@
+ /* See LICENSE file for copyright and license details. */
++#include <errno.h>
++#include <unistd.h>
+ #include <ifaddrs.h>
+ #include <netdb.h>
+ #include <stdio.h>
+@@ -27,9 +29,9 @@ ip(const char *interface, unsigned short sa_family)
+ 	}
+ 
+ 	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+-		if (!ifa->ifa_addr)
++		if (!ifa->ifa_addr) {
+ 			continue;
+-
++		}
+ 		s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6),
+ 		                host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+ 		if (!strcmp(ifa->ifa_name, interface) &&
+@@ -59,3 +61,77 @@ ipv6(const char *interface)
+ {
+ 	return ip(interface, AF_INET6);
+ }
++
++const char *
++leaked_ip(void)
++{
++	static const char *check_domain = "ip-api.com";
++	static const char *check_request =
++		"GET /line/?fields=query,country HTTP/1.1\r\n"
++		"Host: ip-api.com\r\n\r\n";
++	static const char *bad_addr = "X.X.X.X(Unavailable)";
++	
++	struct addrinfo *ai;
++	int remote_fd;
++	char *p;
++	int s, n;
++	int gai_errno;
++
++	if ((gai_errno = getaddrinfo(check_domain, "http", NULL, &ai)))
++	{
++		warn("Can't resolve domain %s: %s", check_domain, gai_strerror(gai_errno));
++		return bad_addr;
++	}
++	if ((remote_fd = socket(ai->ai_family, ai->ai_socktype, 0)) == -1)
++	{
++		freeaddrinfo(ai);
++		warn("socket:");
++		return bad_addr;
++	}
++	
++	if (connect(remote_fd, ai->ai_addr, ai->ai_addrlen) == -1)
++	{
++		freeaddrinfo(ai);
++		close(remote_fd);
++		warn("connect:", check_domain);
++		return bad_addr;
++	}
++	freeaddrinfo(ai);
++
++	// send request
++	n = strlen(check_request);
++	p = (char *) check_request;
++	while (n)
++	{
++		s = write(remote_fd, p, n);
++
++		if (s == -1)
++		{
++			if (errno == EINTR)
++				continue;
++			close(remote_fd);
++			warn("write:");
++			return bad_addr;
++		}
++		n -= s;
++		p += s;
++	}
++	
++	p = buf;
++	n = sizeof(buf);
++	s = read(remote_fd, p, n);
++	close(remote_fd);
++	p = strstr(buf, "\r\n\r\n");
++	if (!p)
++	{
++		warn("Can't resolve %s: Bad response from server", check_domain);
++		return bad_addr;
++	}
++	p += 4;
++	sscanf(p, "%*s%s", buf);
++	strcat(buf, "(");
++	sscanf(p, "%s", buf+strlen(buf));
++	strcat(buf, ")");
++	
++	return buf;
++}
+diff --git a/config.def.h b/config.def.h
+index d805331..75c282b 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -31,6 +31,7 @@ static const char unknown_str[] = "n/a";
+  * hostname            hostname                        NULL
+  * ipv4                IPv4 address                    interface name (eth0)
+  * ipv6                IPv6 address                    interface name (eth0)
++ * leaked_ip           IP address leaked to Internet   NULL
+  * kernel_release      `uname -r`                      NULL
+  * keyboard_indicators caps/num lock indicators        format string (c?n?)
+  *                                                     see keyboard_indicators.c
+diff --git a/slstatus.h b/slstatus.h
+index 8ef5874..6f67ccd 100644
+--- a/slstatus.h
++++ b/slstatus.h
+@@ -30,6 +30,7 @@ const char *hostname(const char *unused);
+ /* ip */
+ const char *ipv4(const char *interface);
+ const char *ipv6(const char *interface);
++const char *leaked_ip(void);
+ 
+ /* kernel_release */
+ const char *kernel_release(const char *unused);
+-- 
+2.35.1
+

@@ -33,7 +33,6 @@ static const char* const SEPARATOR = "|";
  * hostname            hostname                        NULL
  * ipv4                IPv4 address                    interface name (eth0)
  * ipv6                IPv6 address                    interface name (eth0)
- * leaked_ip           IP address leaked to Internet   NULL
  * kernel_release      `uname -r`                      NULL
  * keyboard_indicators caps/num lock indicators        format string (c?n?)
  *                                                     see keyboard_indicators.c
@@ -93,9 +92,9 @@ static const struct arg args[] = {
 
 	{ wifi_essid,		" %s |",			"wlan0" },
 //	{ wifi_perc,		" (%s%%)|",			"wlan0" },
-	{leaked_ip,		" %s |",				NULL},
+	{netspeed_tx,		" %s",				"wlan0"},
 
 	{ keymap,		" %s |",		NULL },
 
-	{ datetime,		" %s ",		"%F %r " },
+	{ datetime,		" %s |",		"%F %T" },
 };

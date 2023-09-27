@@ -33,6 +33,7 @@ static const char* const SEPARATOR = "|";
  * hostname            hostname                        NULL
  * ipv4                IPv4 address                    interface name (eth0)
  * ipv6                IPv6 address                    interface name (eth0)
+ * leaked_ip           IP address leaked to Internet   NULL
  * kernel_release      `uname -r`                      NULL
  * keyboard_indicators caps/num lock indicators        format string (c?n?)
  *                                                     see keyboard_indicators.c
@@ -76,24 +77,25 @@ i};*/
 
 static const struct arg args[] = {
 	/* function format          argument */
-	{ uptime,		"UPTIME: %s |",			NULL },
+	{ uptime,		" %s |",			NULL },
 
-	{ battery_state,"BS: %s |",			"BAT0" },
-	{ battery_perc,	"BP: %s%% |",		"BAT0" },
-	{ battery_remaining, "BR: (%s)|",	"BAT0" },
+	{ battery_state,	" %s |",			"BAT0" },
+	{ battery_perc,		" %s%% |",			"BAT0" },
+	{ battery_remaining,	 " (%s)|",			"BAT0" },
 
-	{ ram_used,		"RAMU: %s |",		NULL },
-	{ ram_perc,		"RAMP: (%s%%)|",		NULL },
+	{ ram_used,		" %s |",			NULL },
+	{ ram_perc,		" (%s%%)|",			NULL },
 
-	{ cpu_perc,		"CPU: %s%%|",	NULL },
+	{ cpu_perc,		" %s%%|",			NULL },
 
-	{ disk_used,	"DISKU%.4s/ |",		"/" },
+	{ disk_used,		" %.4s |",			"/" },
 /*	{ disk_total,	"DISKT%.4s GiB |",		"/" },*/
 
-	{ wifi_essid,	"WIFI: %s |",			"wlan0" },
-	{ wifi_perc,	"WIFIP: (%s%%)|",		"wlan0" },
+	{ wifi_essid,		" %s |",			"wlan0" },
+//	{ wifi_perc,		" (%s%%)|",			"wlan0" },
+	{leaked_ip,		" %s |",				NULL},
 
-	{ keymap,		"KL: %s |",		NULL },
+	{ keymap,		" %s |",		NULL },
 
-	{ datetime,		"DT: %s |",		"%F %T" },
+	{ datetime,		" %s ",		"%F %r " },
 };
