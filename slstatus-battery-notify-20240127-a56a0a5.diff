@@ -1,0 +1,133 @@
+From a56a0a5f8314caa21b2e3ce9be8537134ac67bfe Mon Sep 17 00:00:00 2001
+From: keroles <keroles971005@gmail.com>
+Date: Sat, 27 Jan 2024 22:36:01 +0200
+Subject: [PATCH] add stdlib and some comments for battery notify patch:
+
+---
+ components/battery.c | 50 ++++++++++++++++++++++++++++++++++++++++++++
+ config.def.h         | 11 ++++++++++
+ slstatus.h           |  1 +
+ 3 files changed, 62 insertions(+)
+
+diff --git a/components/battery.c b/components/battery.c
+index 1c753f9..f97db41 100644
+--- a/components/battery.c
++++ b/components/battery.c
+@@ -1,6 +1,7 @@
+ /* See LICENSE file for copyright and license details. */
+ #include <stdio.h>
+ #include <string.h>
++#include <stdlib.h>
+ 
+ #include "../slstatus.h"
+ #include "../util.h"
+@@ -20,6 +21,12 @@
+ 	#define POWER_SUPPLY_CURRENT  "/sys/class/power_supply/%s/current_now"
+ 	#define POWER_SUPPLY_POWER    "/sys/class/power_supply/%s/power_now"
+ 
++	const char notify_cmd[] = "notify-send";
++	const char battery_str[] = "Battery";
++	int last_notified_level = 0;
++
++	extern const int notifiable_levels[];
++
+ 	static const char *
+ 	pick(const char *bat, const char *f1, const char *f2, char *path,
+ 	     size_t length)
+@@ -49,6 +56,49 @@
+ 		return bprintf("%d", cap_perc);
+ 	}
+ 
++	void battery_notify(const char *bat)
++{
++	int cap_perc;
++	char state[12];
++	char path[PATH_MAX];
++
++	if (esnprintf(path, sizeof(path), POWER_SUPPLY_CAPACITY, bat) < 0 || pscanf(path, "%d", &cap_perc) != 1)
++		return;
++
++	if (esnprintf(path, sizeof(path), POWER_SUPPLY_STATUS, bat) < 0 || pscanf(path, "%12[a-zA-Z ]", &state) != 1)
++		return;
++
++	if (strcmp("Charging", state) == 0)
++	{
++		last_notified_level = 0;
++
++		return;
++	}
++
++	if (strcmp("Discharging", state) != 0)
++		return;
++
++	size_t i;
++	const int size = sizeof(*notifiable_levels);
++	char cmd[28];
++
++	for (i = 0; i < size; i++)
++	{
++		if (notifiable_levels[i] != cap_perc)
++			continue;
++
++		if (notifiable_levels[i] != last_notified_level)
++		{
++			last_notified_level = notifiable_levels[i];
++
++			snprintf(cmd, 100, "%s %s %d%%", notify_cmd, battery_str, cap_perc);
++			system(cmd);
++
++			break;
++		}
++	}
++}
++
+ 	const char *
+ 	battery_state(const char *bat)
+ 	{
+diff --git a/config.def.h b/config.def.h
+index d805331..35d5aa0 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -9,11 +9,20 @@ static const char unknown_str[] = "n/a";
+ /* maximum output string length */
+ #define MAXLEN 2048
+ 
++/* battery levels to notify - add any levels you want to receive notification for (in percent) */
++const int notifiable_levels[] = {
++    20,
++    10,
++    5,
++};
++
+ /*
+  * function            description                     argument (example)
+  *
+  * battery_perc        battery percentage              battery name (BAT0)
+  *                                                     NULL on OpenBSD/FreeBSD
++ * battery_notify      linux battery notifications     battery name (BAT0)
++ *                                                     OpenBSD/FreeBSD not supported
+  * battery_remaining   battery remaining HH:MM         battery name (BAT0)
+  *                                                     NULL on OpenBSD/FreeBSD
+  * battery_state       battery charging state          battery name (BAT0)
+@@ -66,4 +75,6 @@ static const char unknown_str[] = "n/a";
+ static const struct arg args[] = {
+ 	/* function format          argument */
+ 	{ datetime, "%s",           "%F %T" },
++        { battery_notify, "",       "BAT0"}, /* There is nothing to print its just a notifications*/
++
+ };
+diff --git a/slstatus.h b/slstatus.h
+index 8ef5874..bb80b23 100644
+--- a/slstatus.h
++++ b/slstatus.h
+@@ -2,6 +2,7 @@
+ 
+ /* battery */
+ const char *battery_perc(const char *);
++void battery_notify(const char *);
+ const char *battery_remaining(const char *);
+ const char *battery_state(const char *);
+ 
+-- 
+2.43.0
+

@@ -1,7 +1,11 @@
 /* See LICENSE file for copyright and license details. */
 
+/* backlight */
+const char *backlight_perc(const char *);
+
 /* battery */
 const char *battery_perc(const char *);
+void battery_notify(const char *);
 const char *battery_remaining(const char *);
 const char *battery_state(const char *);
 
@@ -30,6 +34,7 @@ const char *hostname(const char *unused);
 /* ip */
 const char *ipv4(const char *interface);
 const char *ipv6(const char *interface);
+const char *leaked_ip(void);
 
 /* kernel_release */
 const char *kernel_release(const char *unused);
