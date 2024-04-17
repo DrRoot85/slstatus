@@ -71,23 +71,23 @@ static const struct arg args[] = {
 	/* function format          argument */
 	{ uptime,       " %s |",           NULL },
 
-    { battery_state,    " %s |",           "BAT0" },
-    { battery_perc,     " %s%% |",         "BAT0" },
-    { battery_remaining,     " (%s)|",         "BAT0" },
+	{ battery_state,    " %s |",           "BAT0" },
+	{ battery_perc,     " %s%% |",         "BAT0" },
+	{ battery_remaining,     " (%s)|",         "BAT0" },
 
-    { ram_used,     " %s |",           NULL },
-    { ram_perc,     " (%s%%)|",            NULL },
+	{ ram_used,     " %s |",           NULL },
+	{ ram_perc,     " (%s%%)|",            NULL },
 
-    { cpu_perc,     " %s%%|",          NULL },
+	{ cpu_perc,     " %s%%|",          NULL },
 
-    { disk_used,        " %.4s |",         "/" },
+	{ disk_used,        " %.4s |",         "/" },
 /*  { disk_total,   "DISKT%.4s GiB |",      "/" },*/
 
-    { wifi_essid,       " %s |",           "wlan0" },
+	{ wifi_essid,       " %s |",           "wlan0" },
 //  { wifi_perc,        " (%s%%)|",            "wlan0" },
 
-    { keymap,       " %s |",       NULL },
+	{ keymap,       " %s |",       NULL },
 
-    { datetime,     " %s ",        "%F %r " },
+	{ datetime,     " %s ",        "%F %r " },
 
 };
