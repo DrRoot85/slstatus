@@ -83,7 +83,7 @@ static const struct arg args[] = {
 	// { disk_used,        " %.4s |",         "/" },
 /*  { disk_total,   "DISKT%.4s GiB |",      "/" },*/
 
-	{ wifi_essid,       " %s |",           "wlan0" },
+	{ wifi_essid,       " %s |",           "wlp4s0" },
 //  { wifi_perc,        " (%s%%)|",            "wlan0" },
 
 	{ keymap,       "  %s |",       NULL },
